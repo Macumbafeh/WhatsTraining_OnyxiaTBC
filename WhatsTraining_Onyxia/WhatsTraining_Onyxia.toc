@@ -1,7 +1,7 @@
 ## Interface: 30300
-## Title: What's Training? WotLK
+## Title: What's Training? (for Onyxia)
 ## Version: 3.0.2
-## Author: Sveng, Anhility (3.3.5 backport)
+## Author: Sveng, Anhility (3.3.5 backport), LezChap (Onyxia Port)
 ## Notes: Shows you what spells are available at your class trainer
 
 Utils.lua
@@ -20,4 +20,4 @@ Classes\Warrior.lua
 
 Localization.lua
 WhatsTrainingUI.lua
-WhatsTraining_WotLK.lua
+WhatsTraining_Onyxia.lua
