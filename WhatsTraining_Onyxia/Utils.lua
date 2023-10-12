@@ -50,6 +50,22 @@ local playerFaction = UnitFactionGroup("player")
 function wt.FactionFilter(spellsByLevel)
 	return filter(spellsByLevel, function(spell) return spell.faction == nil or spell.faction == playerFaction end)	-- Invoking filter() with custom function as @param pred
 end
+--[[
+	@brief		Filter by character race
+
+	@var		playerRace	The character's current race
+	@param		spellsByLevel	Table of spells from <Class>.lua file
+
+	@return						Returns output from filter()
+--]]
+local playerRace = select(3, UnitRace("player"))
+function wt.RaceFilter(spellsByLevel)
+    return filter(spellsByLevel, function(spell)
+        if (spell.race == nil and spell.races == nil) then return true end
+        if (spell.races == nil) then return spell.race == playerRace end
+        return spell.races[1] == playerRace or spell.races[2] == playerRace
+    end)
+end
 
 --[[
 	@brief		When called from <Class>.lua file,

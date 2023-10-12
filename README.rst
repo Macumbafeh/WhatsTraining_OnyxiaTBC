@@ -1,9 +1,11 @@
 ======================
-What's Training? WotLK
+What's Training? (for Onyxia)
 ======================
 What's Training? is an backported addon for World of Warcraft 3.3.5 (WotLK) that adds a list of all the spells for your class in a new tab in the spell book.
 
-They are seperated by categories like **Available Now**, **Coming Soon** and similar.
+This fork has been updated to detect Expansion Phases and automatically update the spell list depending on the server Phase for Warmane's Onyxia (PTE Realm).
+
+They are separated by categories like **Available Now**, **Coming Soon** and similar.
 
 ..  figure:: https://i.imgur.com/XLL83Ll.png
     :alt: What's Training Example Screenshot

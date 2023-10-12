@@ -1,3 +1,13 @@
+4.0.0
+_____
+- Ported for Onyxia
+  - Detection of Expansion Phase (Vanilla/TBC/Wrath)
+  - Loads spell data for appropriate Phase based on Detection above
+  - Added Code to update Warlock Grimoires (Demon Spells) automatically
+  - Removed Hunter Pet Skills from Classic Lists (they're talents on Onyxia)
+  - Removed Mail/Plate from spell lists as existing methods don't update them 
+    to "known" when learnt, and the only fix I saw required too much overhead
+
 3.0.0
 _____
 - Backported from retail to 3.3.5 client

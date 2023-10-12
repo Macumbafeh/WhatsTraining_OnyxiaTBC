@@ -17,9 +17,9 @@ local BOOKTYPE_SPELL =			BOOKTYPE_SPELL				-- Used to specify the players spellb
 local MAX_ROWS =				22							-- Max rows for the data shown in the spellbook
 local ROW_HEIGHT =				14							-- Height of each row in the spellbook
 local SKILL_LINE_TAB =			MAX_SKILLLINE_TABS - 1		-- Position for the addons tab in the spellbook
-local HIGHLIGHT_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_WotLK\\res\\highlight"
-local LEFT_BG_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_WotLK\\res\\left"
-local RIGHT_BG_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_WotLK\\res\\right"
+local HIGHLIGHT_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_Onyxia\\res\\highlight"
+local LEFT_BG_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_Onyxia\\res\\left"
+local RIGHT_BG_TEXTURE_PATH =	"Interface\\AddOns\\WhatsTraining_Onyxia\\res\\right"
 local TAB_TEXTURE_PATH =		"Interface\\Icons\\INV_Misc_QuestionMark"
 
 
@@ -59,6 +59,8 @@ local function setTooltip(spellInfo)
 	tooltip:Show()
 end
 
+local menuFrame = CreateFrame("Frame", "WTRightClickFrame", UIParent,
+                              "UIDropDownMenuTemplate")
 local function setRowSpell(row, spell)
 	if (spell == nil) then
 		row.currentSpell = nil
@@ -94,11 +96,9 @@ local function setRowSpell(row, spell)
 	elseif (not spell.isHeader) then
 		row:SetScript("OnClick", function(_, button)
 			if (not wt.ClickHook) then return end
-			if (button == "RightButton") then
-				wt.ClickHook(spell.id, function()
-					wt:RebuildData()
-				end)
-			end
+			--if (button == "RightButton") then
+		  wt.ClickHook(spell, function() wt:RebuildData()	end)
+      --end
 		end)
 	else
 		row:SetScript("OnClick", nil)
@@ -258,4 +258,29 @@ function wt.CreateFrame()
 	end
 	mainFrame.rows = rows
 	wt.MainFrame = mainFrame
+end
+
+wt.ClickHook = function(spell, afterClick)
+  PlaySound(1115)
+  afterClick()
+  --[[ this section to manually marking tomes as "learnt" wasn't needed.
+  -- left in case some sort of click functionality is needed in future.
+  -- right now clicking a spell just reloads the learnt data
+  local tomeId = spell.id
+  local checked = wt.learnedPetAbilityMap[tomeId]
+  local menu = {
+    {text = spell.name, isTitle = true, classicChecks = true},
+    {text = wt.L.TOME_HEADER, isTitle = true, classicChecks = true},
+    {
+      text = wt.L.TOME_LEARNED,
+      checked = checked,
+      func = function()
+        PlaySound(1115)
+        wt.learnedPetAbilityMap[tomeId] = not checked
+        afterClick()
+      end,
+      isNotRadio = true
+    },
+  }
+  EasyMenu(menu, menuFrame, "cursor", 10, 35, "MENU")--]]
 end

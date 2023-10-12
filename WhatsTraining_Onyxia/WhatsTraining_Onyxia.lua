@@ -11,16 +11,18 @@
 --]]
 local addonName, wt = ...
 
-
 -- @brief		"Constant" variables
-local AVAILABLE_KEY =					"available"
-local MISSINGREQS_KEY =					"missingReqs"
-local NEXTLEVEL_KEY =					"nextLevel"
-local NOTLEVEL_KEY =					"notLevel"
-local MISSINGTALENT_KEY =				"missingTalent"
-local KNOWN_KEY =						"known"
-local COMINGSOON_FONT_COLOR_CODE =		"|cff82c5ff"
-local MISSINGTALENT_FONT_COLOR_CODE =	"|cffffffff"
+local AVAILABLE_KEY = "available"
+local MISSINGREQS_KEY = "missingReqs"
+local NEXTLEVEL_KEY = "nextLevel"
+local NOTLEVEL_KEY = "notLevel"
+local MISSINGTALENT_KEY = "missingTalent"
+local KNOWN_KEY = "known"
+local KNOWN_PET_KEY = "knownPet"
+local PET_KEY = "pet"
+local COMINGSOON_FONT_COLOR_CODE = "|cff82c5ff"
+local MISSINGTALENT_FONT_COLOR_CODE = "|cffffffff"
+local PET_FONT_COLOR_CODE = "|cffffffff"
 
 local function isMountLearned(spellId)
 	local numMounts = GetNumCompanions("MOUNT")
@@ -61,6 +63,15 @@ local function isAbilityKnown(spellId)
 	end
 end
 
+local function isTomeKnown(tomeId)
+  local name, rank = GetSpellInfo(GetItemSpell(tomeId))
+
+  if name then
+   return wt.itemInfoCache[tomeId]
+  end
+
+end
+
 local headers = {
 	{
 		name = wt.L.AVAILABLE_HEADER,
@@ -81,6 +92,11 @@ local headers = {
 		color = RED_FONT_COLOR_CODE,
 		key = NOTLEVEL_KEY
 	},{
+    name = wt.L.PET_HEADER,
+    color = PET_FONT_COLOR_CODE,
+    key = PET_KEY
+    -- nameSort = true
+  },{
 		name = wt.L.MISSINGTALENT_HEADER,
 		color = MISSINGTALENT_FONT_COLOR_CODE,
 		key = MISSINGTALENT_KEY,
@@ -91,7 +107,13 @@ local headers = {
 		hideLevel = true,
 		key = KNOWN_KEY,
 		nameSort = true
-	},
+	},{
+    name = wt.L.KNOWN_PET_HEADER,
+    color = GRAY_FONT_COLOR_CODE,
+    hideLevel = true,
+    key = KNOWN_PET_KEY,
+    nameSort = true
+  }
 }
 
 local categories = {
@@ -121,6 +143,18 @@ wt.data = {}
 local function rebuildData(playerLevel, isLevelUpEvent)
 	categories:ClearSpells()
 	wipe(wt.data)
+  if (wt.TomesByLevel) then
+    for _, tomesAtLevel in pairs(wt.TomesByLevel) do
+      for _, tome in ipairs(tomesAtLevel) do
+        local itemInfo = wt:ItemInfo(tome.id)
+        if (itemInfo ~= nil) then
+          local key = isTomeKnown(tome.id) and
+                          KNOWN_PET_KEY or PET_KEY
+          categories:Insert(key, itemInfo)
+        end
+    end
+  end
+  end
 	for level, spellsAtLevel in pairs(wt.SpellsByLevel) do
 		for _, spell in ipairs(spellsAtLevel) do
 			local spellInfo = wt:SpellInfo(spell.id)
@@ -153,7 +187,7 @@ local function rebuildData(playerLevel, isLevelUpEvent)
 
 	local function byLevelThenName(a, b)
 		if (a.level == b.level) then
-			return a.name < b.name
+      return a.name < b.name
 		end
 		return a.level < b.level
 	end
@@ -170,6 +204,18 @@ local function rebuildData(playerLevel, isLevelUpEvent)
 								 byLevelThenName
 			sort(category.spells, sortFunc)
 			local totalCost = 0
+      if (WT_ShowLearnedNotice == true and category.key == PET_KEY and wt.currentClass == "WARLOCK") then
+                tinsert(wt.data, {
+                    formattedName = wt.L.RIGHT_CLICK_LEARNED,
+                    isHeader = true,
+                    cost = 0,
+                    tooltip = wt.L.CLICK_TO_DISMISS,
+                    click = function()
+                        WT_ShowLearnedNotice = false
+                        wt:RebuildData()
+                    end
+                })
+      end
 			for _, s in ipairs(category.spells) do
 				local effectiveLevel = s.level
 				-- when a player levels up and this is triggered from that event, GetQuestDifficultyColor won't
@@ -200,6 +246,17 @@ function wt:RebuildData()
 	end
 end
 
+local function CacheTomes()
+  for level, tomesByLevel in pairs(wt.TomesByLevel) do
+      for _, tome in ipairs(tomesByLevel) do
+          wt:CacheItem(tome, level, rebuildIfNotCached)
+      end
+  end
+end
+
+if (wt.TomesByLevel) then
+  CacheTomes()
+end
 for level, spellsByLevel in pairs(wt.SpellsByLevel) do
 	for _, spell in ipairs(spellsByLevel) do
 		wt:CacheSpell(spell, level, rebuildIfNotCached)
@@ -211,18 +268,30 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 	if (event == "PLAYER_ENTERING_WORLD") then
 		local isLogin, isReload = ...
 		--if (isLogin or isReload) then
+    wt.learnedPetAbilityMap = {}
 		rebuildData(UnitLevel("player"))
 		wt.CreateFrame()
 		--end
 	elseif (event == "LEARNED_SPELL_IN_TAB" or event == "PLAYER_LEVEL_UP") then
 		local isLevelUp = event == "PLAYER_LEVEL_UP"
 		rebuildData(isLevelUp and ... or UnitLevel("player"), isLevelUp)
+    --[[  Doesn't look like this was needed when new demon is learned
+    if wt.currentClass == "WARLOCK" and event == "LEARNED_SPELL_IN_TAB" and ... == 3 then
+      CacheTomes()
+    end--]]
 		if (wt.MainFrame and wt.MainFrame:IsVisible()) then
 			wt.Update(wt.MainFrame, true)
 		end
+  elseif (event == "GET_ITEM_INFO_RECEIVED") then
+    local itemID = ...
+    if wait[itemID] then
+      wt:CacheItem(itemID, wait[itemID].level, true)
+      wait[itemID] = nil
+    end
 	end
 end)
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
 eventFrame:RegisterEvent("PLAYER_LEVEL_UP")
+eventFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
