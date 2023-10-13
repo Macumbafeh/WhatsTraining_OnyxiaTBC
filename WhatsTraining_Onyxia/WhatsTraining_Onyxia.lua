@@ -67,7 +67,7 @@ local function isTomeKnown(tomeId)
   local name, rank = GetSpellInfo(GetItemSpell(tomeId))
 
   if name then
-   return wt.itemInfoCache[tomeId]
+    return wt.itemInfoCache[tomeId]
   end
 
 end
@@ -204,18 +204,6 @@ local function rebuildData(playerLevel, isLevelUpEvent)
 								 byLevelThenName
 			sort(category.spells, sortFunc)
 			local totalCost = 0
-      if (WT_ShowLearnedNotice == true and category.key == PET_KEY and wt.currentClass == "WARLOCK") then
-                tinsert(wt.data, {
-                    formattedName = wt.L.RIGHT_CLICK_LEARNED,
-                    isHeader = true,
-                    cost = 0,
-                    tooltip = wt.L.CLICK_TO_DISMISS,
-                    click = function()
-                        WT_ShowLearnedNotice = false
-                        wt:RebuildData()
-                    end
-                })
-      end
 			for _, s in ipairs(category.spells) do
 				local effectiveLevel = s.level
 				-- when a player levels up and this is triggered from that event, GetQuestDifficultyColor won't
@@ -246,17 +234,47 @@ function wt:RebuildData()
 	end
 end
 
-local function CacheTomes()
-  for level, tomesByLevel in pairs(wt.TomesByLevel) do
-      for _, tome in ipairs(tomesByLevel) do
-          wt:CacheItem(tome, level, rebuildIfNotCached)
+local function QueryTomes(tomes)
+  local i=1
+  local querytime = 0
+  local now = 0
+  while i <= #tomes do
+    now = GetTime()
+    if now - querytime > 0.03 then
+      querytime = GetTime()    
+      queryitem = tomes[i].tome.id
+      if (queryitem) and (queryitem ~= nil) and (queryitem ~= "") and (queryitem ~= 0) then
+        GameTooltip:SetHyperlink("item:"..queryitem..":0:0:0:0:0:0:0")
       end
+      i=i+1
+    end
+  end
+  for _,tomelist in ipairs(tomes) do
+    wt:CacheItem(tomelist.tome, tomelist.level, rebuildIfNotCached)
+  end
+  wt:RebuildData()
+end
+
+local function CheckTomes()
+  if (wt.TomesByLevel) then
+    local neededTomes = {}
+    for level, tomesByLevel in pairs(wt.TomesByLevel) do
+        for _, tome in ipairs(tomesByLevel) do
+          if GetItemInfo(tome.id) then
+            wt:CacheItem(tome, level, rebuildIfNotCached)
+          else
+            neededTomes[#neededTomes + 1] = {tome = tome, level = level}
+          end
+        end
+    end
+    if next(neededTomes) then
+      QueryTomes(neededTomes)
+    else
+      return true
+    end
   end
 end
 
-if (wt.TomesByLevel) then
-  CacheTomes()
-end
 for level, spellsByLevel in pairs(wt.SpellsByLevel) do
 	for _, spell in ipairs(spellsByLevel) do
 		wt:CacheSpell(spell, level, rebuildIfNotCached)
@@ -268,7 +286,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 	if (event == "PLAYER_ENTERING_WORLD") then
 		local isLogin, isReload = ...
 		--if (isLogin or isReload) then
-    wt.learnedPetAbilityMap = {}
+    CheckTomes()
 		rebuildData(UnitLevel("player"))
 		wt.CreateFrame()
 		--end
@@ -282,16 +300,21 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 		if (wt.MainFrame and wt.MainFrame:IsVisible()) then
 			wt.Update(wt.MainFrame, true)
 		end
-  elseif (event == "GET_ITEM_INFO_RECEIVED") then
-    local itemID = ...
-    if wait[itemID] then
-      wt:CacheItem(itemID, wait[itemID].level, true)
-      wait[itemID] = nil
+  elseif (event == "SPELLS_CHANGED") then
+    --[[
+    Since this event is fired every time you open/scroll through your
+    spellbook, this is the perfect event to keep checking the client's 
+    item cache for the Tome/Grimoires until they're all cached and the data
+    is loaded into the addon tables.
+    --]]
+    if CheckTomes() then
+      eventFrame:UnregisterEvent("SPELLS_CHANGED")
     end
+		rebuildData(UnitLevel("player"))
 	end
 end)
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
 eventFrame:RegisterEvent("PLAYER_LEVEL_UP")
-eventFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+eventFrame:RegisterEvent("SPELLS_CHANGED")

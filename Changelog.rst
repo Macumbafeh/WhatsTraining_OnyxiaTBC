@@ -1,3 +1,8 @@
+4.0.1
+_____
+- Removed "Greater Stamina (Rank 1)" (spellID: 4187) from Hunter Spelllist to fix error.
+- Fixed item caching for Grimoires (Warlock) so they'll work correctly now.
+
 4.0.0
 _____
 - Ported for Onyxia

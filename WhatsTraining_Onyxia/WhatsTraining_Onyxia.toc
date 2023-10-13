@@ -1,6 +1,6 @@
 ## Interface: 30300
 ## Title: What's Training? (for Onyxia)
-## Version: 4.0.0
+## Version: 4.0.1
 ## Author: Sveng, Anhility (3.3.5 backport), LezChap (Onyxia Port)
 ## Notes: Shows you what spells are available at your class trainer
 

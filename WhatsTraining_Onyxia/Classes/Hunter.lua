@@ -52,7 +52,6 @@ local SpellsByLevel = {
   },
   [10] = {
     {id = 13165, cost = 400},
-    {id = 4187, cost = 10},
     {id = 13549, cost = 400, requiredIds = {1978}},
     {id = 19883, cost = 400}
   },

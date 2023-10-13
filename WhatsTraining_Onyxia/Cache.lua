@@ -42,6 +42,7 @@ function wt:CacheSpell(spell, level, done)
 		level = level,											-- Level
 		formattedLevel = format(wt.L.LEVEL_FORMAT, level)		-- Formatted level
 	}
+  assert(name, "Can't find name for SpellID: "..tostring(spell.id))
   if self.allRanksCache[name] == nil then
     self.allRanksCache[name] = {}
   end
@@ -74,23 +75,23 @@ function wt:CacheItem(item, level, done)
     return
   end
   local itemName, _, _, _, _, _, _, _, _, icon, cost = GetItemInfo(item.id)
-  if itemName then
-    local rankText = string.match(itemName, parensPattern)
-    self.itemInfoCache[item.id] = {
-      id = item.id,
-      name = string.gsub(itemName, parensPattern, ""),
-      formattedSubText = rankText,
-      icon = icon,
-      cost = item.cost,
-      formattedCost = GetCoinTextureString(item.cost),
-      level = level,
-      formattedLevel = format(wt.L.LEVEL_FORMAT, level),
-      isItem = true
-    }
-    done(false)
-  else
-    wait[item.id] = {level = level, done = done}
+  if not itemName then 
+    print("Error: WhatsTraining cannot retrieve Item Info for ID: "..tostring(item.id)
+    return 
   end
+  local rankText = string.match(itemName, parensPattern)
+  self.itemInfoCache[item.id] = {
+    id = item.id,
+    name = string.gsub(itemName, parensPattern, ""),
+    formattedSubText = rankText,
+    icon = icon,
+    cost = item.cost,
+    formattedCost = GetCoinTextureString(item.cost),
+    level = level,
+    formattedLevel = format(wt.L.LEVEL_FORMAT, level),
+    isItem = true
+  }
+  done(false)
 end
 
 function wt:ItemInfo(itemId) return self.itemInfoCache[itemId] end
