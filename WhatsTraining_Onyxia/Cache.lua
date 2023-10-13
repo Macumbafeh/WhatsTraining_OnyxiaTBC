@@ -76,7 +76,7 @@ function wt:CacheItem(item, level, done)
   end
   local itemName, _, _, _, _, _, _, _, _, icon, cost = GetItemInfo(item.id)
   if not itemName then 
-    print("Error: WhatsTraining cannot retrieve Item Info for ID: "..tostring(item.id)
+    print("Error: WhatsTraining cannot retrieve Item Info for ID: "..tostring(item.id))
     return 
   end
   local rankText = string.match(itemName, parensPattern)
