@@ -516,8 +516,8 @@ local SpellsByLevel = {
     {id = 27140, cost = 50000, requiredIds = {25291}},
     {id = 27141, cost = 46000, requiredIds = {27140,25916}},
     {id = 27170, cost = 2300, requiredIds = {20920}, requiredTalentId = 20375},
-    {id = 348700, cost = 67000, faction = "Alliance"},
-    {id = 348704, cost = 67000, faction = "Horde"},
+    -- {id = 348700, cost = 67000, faction = "Alliance"},
+    -- {id = 348704, cost = 67000, faction = "Horde"},
   },
 },
 [2] = { --Wrath Spells
